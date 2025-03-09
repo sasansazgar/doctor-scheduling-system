@@ -1,8 +1,10 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { body, validationResult } from 'express-validator';
+import { body, validationResult } from 'express-validator/check';
 import { AppError } from '../middleware/errorHandler';
 import User from '../models/User';
+import { Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
@@ -27,7 +29,7 @@ const validateLogin = [
 ];
 
 // Register route
-router.post('/register', validateRegistration, async (req, res, next) => {
+router.post('/register', validateRegistration, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -43,40 +45,52 @@ router.post('/register', validateRegistration, async (req, res, next) => {
     }
 
     // Create new user
-    const user = await User.create({
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = new User({
       email,
-      password,
+      password: hashedPassword,
       firstName,
       lastName,
       role,
       preferredDays,
     });
 
+    await user.save();
+
     // Generate JWT token
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
-    );
-
-    // Remove password from response
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    res.status(201).json({
-      status: 'success',
-      data: {
-        user: userResponse,
-        token,
+    const payload = {
+      user: {
+        id: user._id,
+        role: user.role,
       },
-    });
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' },
+      (err: Error | null, token: string | undefined) => {
+        if (err) throw err;
+        const userResponse = user.toObject();
+        const { password: _, ...userWithoutPassword } = userResponse;
+        res.status(201).json({
+          status: 'success',
+          data: {
+            user: userWithoutPassword,
+            token,
+          },
+        });
+      }
+    );
   } catch (error) {
     next(error);
   }
 });
 
 // Login route
-router.post('/login', validateLogin, async (req, res, next) => {
+router.post('/login', validateLogin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -92,29 +106,36 @@ router.post('/login', validateLogin, async (req, res, next) => {
     }
 
     // Check password
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
       throw new AppError('Invalid email or password', 401);
     }
 
     // Generate JWT token
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
-    );
-
-    // Remove password from response
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    res.json({
-      status: 'success',
-      data: {
-        user: userResponse,
-        token,
+    const payload = {
+      user: {
+        id: user._id,
+        role: user.role,
       },
-    });
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' },
+      (err: Error | null, token: string | undefined) => {
+        if (err) throw err;
+        const userResponse = user.toObject();
+        const { password: _, ...userWithoutPassword } = userResponse;
+        res.json({
+          status: 'success',
+          data: {
+            user: userWithoutPassword,
+            token,
+          },
+        });
+      }
+    );
   } catch (error) {
     next(error);
   }

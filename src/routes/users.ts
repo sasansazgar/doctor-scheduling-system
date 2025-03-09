@@ -1,11 +1,12 @@
 import express from 'express';
 import { AppError } from '../middleware/errorHandler';
 import User from '../models/User';
+import { Request, Response, NextFunction } from 'express';
 
 const router = express.Router();
 
 // Get all doctors (admin only)
-router.get('/doctors', async (req, res, next) => {
+router.get('/doctors', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (req.user.role !== 'admin') {
       throw new AppError('Access denied', 403);
@@ -23,7 +24,7 @@ router.get('/doctors', async (req, res, next) => {
 });
 
 // Get user profile
-router.get('/profile', async (req, res, next) => {
+router.get('/profile', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
 
@@ -37,7 +38,7 @@ router.get('/profile', async (req, res, next) => {
 });
 
 // Update user profile
-router.put('/profile', async (req, res, next) => {
+router.put('/profile', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { firstName, lastName, preferredDays } = req.body;
 
@@ -53,11 +54,11 @@ router.put('/profile', async (req, res, next) => {
     await user.save();
 
     const userResponse = user.toObject();
-    delete userResponse.password;
+    const { password: _, ...userWithoutPassword } = userResponse;
 
     res.json({
       status: 'success',
-      data: userResponse,
+      data: userWithoutPassword,
     });
   } catch (error) {
     next(error);
@@ -65,7 +66,7 @@ router.put('/profile', async (req, res, next) => {
 });
 
 // Update user status (admin only)
-router.put('/:id/status', async (req, res, next) => {
+router.put('/:id/status', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (req.user.role !== 'admin') {
       throw new AppError('Access denied', 403);
@@ -83,11 +84,11 @@ router.put('/:id/status', async (req, res, next) => {
     await user.save();
 
     const userResponse = user.toObject();
-    delete userResponse.password;
+    const { password: _, ...userWithoutPassword } = userResponse;
 
     res.json({
       status: 'success',
-      data: userResponse,
+      data: userWithoutPassword,
     });
   } catch (error) {
     next(error);

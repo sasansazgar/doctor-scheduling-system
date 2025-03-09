@@ -8,7 +8,7 @@ import scheduleRoutes from './routes/schedule';
 import availabilityRoutes from './routes/availability';
 import userRoutes from './routes/users';
 import { errorHandler } from './middleware/errorHandler';
-import { authMiddleware } from './middleware/auth';
+import { auth } from './middleware/auth';
 
 dotenv.config();
 
@@ -22,16 +22,21 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/schedule', authMiddleware, scheduleRoutes);
-app.use('/api/availability', authMiddleware, availabilityRoutes);
-app.use('/api/users', authMiddleware, userRoutes);
+app.use('/api/schedule', auth, scheduleRoutes);
+app.use('/api/availability', auth, availabilityRoutes);
+app.use('/api/users', auth, userRoutes);
 
 // Error handling
 app.use(errorHandler);
 
 // Database connection
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) {
+  throw new Error('MONGODB_URI is not defined in environment variables');
+}
+
 mongoose
-  .connect(process.env.MONGODB_URI!)
+  .connect(mongoUri)
   .then(() => {
     console.log('Connected to MongoDB');
     app.listen(port, () => {

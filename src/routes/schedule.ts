@@ -1,8 +1,9 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
+import { body, validationResult } from 'express-validator/check';
 import { AppError } from '../middleware/errorHandler';
 import Schedule from '../models/Schedule';
 import User from '../models/User';
+import { Request, Response, NextFunction } from 'express';
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ const validateSchedule = [
 ];
 
 // Get my schedule
-router.get('/my-schedule', async (req, res, next) => {
+router.get('/my-schedule', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const schedules = await Schedule.find({ userId: req.user._id })
       .populate('assignedByUser', 'firstName lastName')
@@ -31,7 +32,7 @@ router.get('/my-schedule', async (req, res, next) => {
 });
 
 // Get all schedules (admin only)
-router.get('/all', async (req, res, next) => {
+router.get('/all', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (req.user.role !== 'admin') {
       throw new AppError('Access denied', 403);
@@ -52,7 +53,7 @@ router.get('/all', async (req, res, next) => {
 });
 
 // Assign shift (admin only)
-router.post('/assign', validateSchedule, async (req, res, next) => {
+router.post('/assign', validateSchedule, async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (req.user.role !== 'admin') {
       throw new AppError('Access denied', 403);
@@ -104,7 +105,7 @@ router.post('/assign', validateSchedule, async (req, res, next) => {
 });
 
 // Update schedule (admin only)
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (req.user.role !== 'admin') {
       throw new AppError('Access denied', 403);
@@ -135,7 +136,7 @@ router.put('/:id', async (req, res, next) => {
 });
 
 // Delete schedule (admin only)
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (req.user.role !== 'admin') {
       throw new AppError('Access denied', 403);

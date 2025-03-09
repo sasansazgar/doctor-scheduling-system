@@ -1,7 +1,8 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
+import { body, validationResult } from 'express-validator/check';
 import { AppError } from '../middleware/errorHandler';
 import Availability from '../models/Availability';
+import { Request, Response, NextFunction } from 'express';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ const validateAvailability = [
 ];
 
 // Get my availability
-router.get('/my-availability', async (req, res, next) => {
+router.get('/my-availability', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const availabilities = await Availability.find({ userId: req.user._id })
       .sort({ date: 1 });
@@ -29,7 +30,7 @@ router.get('/my-availability', async (req, res, next) => {
 });
 
 // Get all availability (admin only)
-router.get('/all', async (req, res, next) => {
+router.get('/all', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (req.user.role !== 'admin') {
       throw new AppError('Access denied', 403);
@@ -49,7 +50,7 @@ router.get('/all', async (req, res, next) => {
 });
 
 // Update availability
-router.post('/update', validateAvailability, async (req, res, next) => {
+router.post('/update', validateAvailability, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -93,7 +94,7 @@ router.post('/update', validateAvailability, async (req, res, next) => {
 });
 
 // Bulk update availability
-router.post('/bulk-update', async (req, res, next) => {
+router.post('/bulk-update', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { availabilities } = req.body;
 
