@@ -20,6 +20,11 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/schedule', auth, scheduleRoutes);

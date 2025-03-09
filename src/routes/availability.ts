@@ -1,5 +1,5 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator/check';
+import { body, validationResult } from 'express-validator';
 import { AppError } from '../middleware/errorHandler';
 import Availability from '../models/Availability';
 import { Request, Response, NextFunction } from 'express';
